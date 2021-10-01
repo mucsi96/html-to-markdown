@@ -1,2 +1,2 @@
 # html-to-markdown
-Convert semantic HTML to markdown
+Script to convert semantic HTML to markdown
