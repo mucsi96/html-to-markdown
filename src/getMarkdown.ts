@@ -1,15 +1,21 @@
+type Margin = {
+  top?: number;
+  left?: number;
+  bottom?: number;
+  right?: number;
+};
+
 type Chunk = {
-  marginTop?: number;
   content?: string;
-  marginBottom?: number;
+  margin?: Margin;
 };
 
 function chunk(options: Chunk): Chunk {
   return options;
 }
 
-function collapseMargins(marginTop?: number, marginBottom?: number): number {
-  return Math.max(marginTop ?? 0, marginBottom ?? 0);
+function collapseMargins(marginA?: number, marginB?: number): number {
+  return Math.max(marginA ?? 0, marginB ?? 0);
 }
 
 function joinChunks(chunks: Chunk[]): Chunk {
@@ -23,15 +29,26 @@ function joinChunks(chunks: Chunk[]): Chunk {
 
   const a = chunks[0];
   const b = joinChunks(chunks.slice(1));
-  const gap = collapseMargins(a.marginBottom, b.marginTop);
+  const verticalGap = collapseMargins(a.margin?.bottom, b.margin?.top);
+  const horizontalGap = collapseMargins(a.margin?.right, b.margin?.left);
   return chunk({
-    marginTop: a.content
-      ? a.marginTop
-      : collapseMargins(a.marginTop, a.marginBottom),
-    marginBottom: b.content
-      ? b.marginBottom
-      : collapseMargins(b.marginTop, b.marginBottom),
-    content: [a.content, b.content].filter(Boolean).join('\n'.repeat(gap)),
+    margin: {
+      top: a.content
+        ? a.margin?.top
+        : collapseMargins(a.margin?.top, a.margin?.bottom),
+      right: a.content
+        ? a.margin?.right
+        : collapseMargins(a.margin?.right, a.margin?.left),
+      bottom: b.content
+        ? b.margin?.bottom
+        : collapseMargins(b.margin?.top, b.margin?.bottom),
+      left: a.content
+        ? a.margin?.left
+        : collapseMargins(a.margin?.left, a.margin?.right),
+    },
+    content: [a.content, b.content]
+      .filter(Boolean)
+      .join(verticalGap ? '\n'.repeat(verticalGap) : ' '.repeat(horizontalGap)),
   });
 }
 
@@ -39,21 +56,15 @@ function wrap(content?: string, prefix?: string, suffix = prefix): string {
   return content ? [prefix, content, suffix].join('') : '';
 }
 
-function listItem(text: string, level = 1): string {
-  return ['  '.repeat(level - 1), '- ', text].join('');
-}
-
-function link(text: string, link: string): string {
-  return `[${text}](${link})`;
-}
-
 function headingChunk(content?: string, level: number = 1): Chunk[] {
   return content
     ? [
         chunk({
           content: ['#'.repeat(level), content].join(' '),
-          marginTop: 2,
-          marginBottom: 2,
+          margin: {
+            top: 2,
+            bottom: 2,
+          },
         }),
       ]
     : [];
@@ -70,17 +81,29 @@ function getMarkdownRecursive(root: HTMLElement): Chunk[] {
           return [
             chunk({
               content,
-              marginTop: 2,
-              marginBottom: 2,
+              margin: {
+                top: 2,
+                bottom: 2,
+              },
             }),
           ];
 
         case 'br':
-          return [chunk({ marginBottom: 1 })];
+          return [
+            chunk({
+              margin: {
+                bottom: 1,
+              },
+            }),
+          ];
         case 'strong':
           return [
             chunk({
               content: wrap(content, '**'),
+              margin: {
+                right: 1,
+                left: 1,
+              },
             }),
           ];
         case 'h1':
@@ -95,22 +118,64 @@ function getMarkdownRecursive(root: HTMLElement): Chunk[] {
           return headingChunk(content, 5);
         case 'h6':
           return headingChunk(content, 6);
+        case 'code':
+          return chunk({
+            content: wrap(content, '`'),
+            margin: {
+              right: 1,
+              left: 1,
+            },
+          });
         case 'pre':
-          return [
-            content?.includes('\n')
-              ? chunk({
-                  content: wrap(content, '```', '```'),
-                  marginTop: 2,
-                  marginBottom: 2,
-                })
-              : chunk({
-                  content: wrap(content, ' `', '` '),
-                }),
-          ];
+          return chunk({
+            content: wrap(content, '```'),
+            margin: {
+              top: 2,
+              bottom: 2,
+            },
+          });
         case 'a':
           return [
             chunk({
-              content: ` [${content}](${element.getAttribute('href')}) `,
+              content: `[${content}](${element.getAttribute('href')})`,
+              margin: {
+                right: 1,
+                left: 1,
+              },
+            }),
+          ];
+        case 'li':
+          return [
+            chunk({
+              content,
+              margin: {
+                right: 1,
+                left: 1,
+              },
+            }),
+          ];
+        case 'ol':
+          return [
+            chunk({
+              content: chunks
+                .map((chunk, index) => `${index + 1}. ${chunk.content ?? ''}`)
+                .join('\n'),
+              margin: {
+                top: 2,
+                bottom: 2,
+              },
+            }),
+          ];
+        case 'ul':
+          return [
+            chunk({
+              content: chunks
+                .map((chunk) => `- ${chunk.content ?? ''}`)
+                .join('\n'),
+              margin: {
+                top: 2,
+                bottom: 2,
+              },
             }),
           ];
         default:

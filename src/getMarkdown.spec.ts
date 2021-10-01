@@ -33,7 +33,7 @@ describe('getMarkdown', () => {
 
   test('returns strong text as bold', () => {
     document.body.innerHTML = 'sample<strong>strong</strong>text';
-    expect(getMarkdown()).toEqual('sample**strong**text');
+    expect(getMarkdown()).toEqual('sample **strong** text');
   });
 
   test('returns headign level 1', () => {
@@ -67,7 +67,7 @@ describe('getMarkdown', () => {
   });
 
   test('returns inline code', () => {
-    document.body.innerHTML = 'sample<pre>code</pre>text';
+    document.body.innerHTML = 'sample<code>code</code>text';
     expect(getMarkdown()).toEqual('sample `code` text');
   });
 
@@ -84,5 +84,15 @@ describe('getMarkdown', () => {
   test('returns ordered list', () => {
     document.body.innerHTML = 'sample<ol><li>a</li><li>b</li></ol>text';
     expect(getMarkdown()).toEqual('sample\n\n1. a\n2. b\n\ntext');
+  })
+
+  test('returns unordered list', () => {
+    document.body.innerHTML = 'sample<ul><li>a</li><li>b</li></ul>text';
+    expect(getMarkdown()).toEqual('sample\n\n- a\n- b\n\ntext');
+  })
+
+  test('returns list with complex items', () => {
+    document.body.innerHTML = 'sample<ul><li>first<strong>strong</strong>item</li><li>second<code>code</code>item</li></ul>text';
+    expect(getMarkdown()).toEqual('sample\n\n- first **strong** item\n- second `code` item\n\ntext');
   })
 });

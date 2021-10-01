@@ -1,8 +1,8 @@
 function chunk(options) {
     return options;
 }
-function collapseMargins(marginTop, marginBottom) {
-    return Math.max(marginTop ?? 0, marginBottom ?? 0);
+function collapseMargins(marginA, marginB) {
+    return Math.max(marginA ?? 0, marginB ?? 0);
 }
 function joinChunks(chunks) {
     if (!chunks.length) {
@@ -13,42 +13,40 @@ function joinChunks(chunks) {
     }
     const a = chunks[0];
     const b = joinChunks(chunks.slice(1));
-    const gap = collapseMargins(a.marginBottom, b.marginTop);
+    const verticalGap = collapseMargins(a.margin?.bottom, b.margin?.top);
+    const horizontalGap = collapseMargins(a.margin?.right, b.margin?.left);
     return chunk({
-        marginTop: a.content
-            ? a.marginTop
-            : collapseMargins(a.marginTop, a.marginBottom),
-        marginBottom: b.content
-            ? b.marginBottom
-            : collapseMargins(b.marginTop, b.marginBottom),
-        content: [a.content, b.content].filter(Boolean).join('\n'.repeat(gap)),
+        margin: {
+            top: a.content
+                ? a.margin?.top
+                : collapseMargins(a.margin?.top, a.margin?.bottom),
+            right: a.content
+                ? a.margin?.right
+                : collapseMargins(a.margin?.right, a.margin?.left),
+            bottom: b.content
+                ? b.margin?.bottom
+                : collapseMargins(b.margin?.top, b.margin?.bottom),
+            left: a.content
+                ? a.margin?.left
+                : collapseMargins(a.margin?.left, a.margin?.right),
+        },
+        content: [a.content, b.content]
+            .filter(Boolean)
+            .join(verticalGap ? '\n'.repeat(verticalGap) : ' '.repeat(horizontalGap)),
     });
 }
 function wrap(content, prefix, suffix = prefix) {
     return content ? [prefix, content, suffix].join('') : '';
 }
-function code(content, language) {
-    return content && `\`\`\`${language}\n\n${content}\n\n\`\`\``;
-}
-function inlineCode(content) {
-    return wrap(content, '`', '`');
-}
-function heading(name, level) {
-    return ['#'.repeat(level), name].join(' ');
-}
-function listItem(text, level = 1) {
-    return ['  '.repeat(level - 1), '- ', text].join('');
-}
-function link(text, link) {
-    return `[${text}](${link})`;
-}
 function headingChunk(content, level = 1) {
     return content
         ? [
             chunk({
-                content: heading(content, level),
-                marginTop: 2,
-                marginBottom: 2,
+                content: ['#'.repeat(level), content].join(' '),
+                margin: {
+                    top: 2,
+                    bottom: 2,
+                },
             }),
         ]
         : [];
@@ -64,16 +62,28 @@ function getMarkdownRecursive(root) {
                     return [
                         chunk({
                             content,
-                            marginTop: 2,
-                            marginBottom: 2,
+                            margin: {
+                                top: 2,
+                                bottom: 2,
+                            },
                         }),
                     ];
                 case 'br':
-                    return [chunk({ marginBottom: 1 })];
+                    return [
+                        chunk({
+                            margin: {
+                                bottom: 1,
+                            },
+                        }),
+                    ];
                 case 'strong':
                     return [
                         chunk({
                             content: wrap(content, '**'),
+                            margin: {
+                                right: 1,
+                                left: 1,
+                            },
                         }),
                     ];
                 case 'h1':
@@ -88,6 +98,66 @@ function getMarkdownRecursive(root) {
                     return headingChunk(content, 5);
                 case 'h6':
                     return headingChunk(content, 6);
+                case 'code':
+                    return chunk({
+                        content: wrap(content, '`'),
+                        margin: {
+                            right: 1,
+                            left: 1,
+                        },
+                    });
+                case 'pre':
+                    return chunk({
+                        content: wrap(content, '```'),
+                        margin: {
+                            top: 2,
+                            bottom: 2,
+                        },
+                    });
+                case 'a':
+                    return [
+                        chunk({
+                            content: `[${content}](${element.getAttribute('href')})`,
+                            margin: {
+                                right: 1,
+                                left: 1,
+                            },
+                        }),
+                    ];
+                case 'li':
+                    return [
+                        chunk({
+                            content,
+                            margin: {
+                                right: 1,
+                                left: 1,
+                            },
+                        }),
+                    ];
+                case 'ol':
+                    return [
+                        chunk({
+                            content: chunks
+                                .map((chunk, index) => `${index + 1}. ${chunk.content ?? ''}`)
+                                .join('\n'),
+                            margin: {
+                                top: 2,
+                                bottom: 2,
+                            },
+                        }),
+                    ];
+                case 'ul':
+                    return [
+                        chunk({
+                            content: chunks
+                                .map((chunk) => `- ${chunk.content ?? ''}`)
+                                .join('\n'),
+                            margin: {
+                                top: 2,
+                                bottom: 2,
+                            },
+                        }),
+                    ];
                 default:
                     return chunks;
             }
