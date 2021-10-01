@@ -39,18 +39,6 @@ function wrap(content?: string, prefix?: string, suffix = prefix): string {
   return content ? [prefix, content, suffix].join('') : '';
 }
 
-function code(content: string, language: string): string {
-  return content && `\`\`\`${language}\n\n${content}\n\n\`\`\``;
-}
-
-function inlineCode(content: string): string {
-  return wrap(content, '`', '`');
-}
-
-function heading(name: string, level: number): string {
-  return ['#'.repeat(level), name].join(' ');
-}
-
 function listItem(text: string, level = 1): string {
   return ['  '.repeat(level - 1), '- ', text].join('');
 }
@@ -63,7 +51,7 @@ function headingChunk(content?: string, level: number = 1): Chunk[] {
   return content
     ? [
         chunk({
-          content: heading(content, level),
+          content: ['#'.repeat(level), content].join(' '),
           marginTop: 2,
           marginBottom: 2,
         }),
@@ -107,6 +95,24 @@ function getMarkdownRecursive(root: HTMLElement): Chunk[] {
           return headingChunk(content, 5);
         case 'h6':
           return headingChunk(content, 6);
+        case 'pre':
+          return [
+            content?.includes('\n')
+              ? chunk({
+                  content: wrap(content, '```', '```'),
+                  marginTop: 2,
+                  marginBottom: 2,
+                })
+              : chunk({
+                  content: wrap(content, ' `', '` '),
+                }),
+          ];
+        case 'a':
+          return [
+            chunk({
+              content: ` [${content}](${element.getAttribute('href')}) `,
+            }),
+          ];
         default:
           return chunks;
       }

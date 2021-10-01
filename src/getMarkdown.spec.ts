@@ -65,4 +65,24 @@ describe('getMarkdown', () => {
     document.body.innerHTML = 'sample<h6>heading</h6>text';
     expect(getMarkdown()).toEqual('sample\n\n###### heading\n\ntext');
   });
+
+  test('returns inline code', () => {
+    document.body.innerHTML = 'sample<pre>code</pre>text';
+    expect(getMarkdown()).toEqual('sample `code` text');
+  });
+
+  test('returns multiline code', () => {
+    document.body.innerHTML = 'sample<pre>multi\nline\ncode</pre>text';
+    expect(getMarkdown()).toEqual('sample\n\n```multi\nline\ncode```\n\ntext');
+  });
+
+  test('returns link', () => {
+    document.body.innerHTML = 'sample<a href="#test-href">link</a>text';
+    expect(getMarkdown()).toEqual('sample [link](#test-href) text');
+  })
+
+  test('returns ordered list', () => {
+    document.body.innerHTML = 'sample<ol><li>a</li><li>b</li></ol>text';
+    expect(getMarkdown()).toEqual('sample\n\n1. a\n2. b\n\ntext');
+  })
 });
