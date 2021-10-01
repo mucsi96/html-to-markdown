@@ -92,8 +92,8 @@ describe('getMarkdown', () => {
   });
 
   test('returns multiline code', () => {
-    document.body.innerHTML = 'sample<pre>multi\nline\ncode</pre>text';
-    expect(getMarkdown()).toEqual('sample\n\n```multi\nline\ncode```\n\ntext');
+    document.body.innerHTML = 'sample<pre><code>multi\nline\ncode</code></pre>text';
+    expect(getMarkdown()).toEqual('sample\n\n```\nmulti\nline\ncode\n```\n\ntext');
   });
 
   test('returns link', () => {

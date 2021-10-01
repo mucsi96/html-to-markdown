@@ -138,6 +138,10 @@ function getMarkdownRecursive(root: HTMLElement): Chunk[] {
         case 'h6':
           return headingChunk(element, content, 6);
         case 'code':
+          if (element.parentElement?.tagName.toLowerCase() === 'pre') {
+            return chunks;
+          }
+
           return chunk({
             content: wrap(content, '`'),
             margin: {
@@ -147,7 +151,7 @@ function getMarkdownRecursive(root: HTMLElement): Chunk[] {
           });
         case 'pre':
           return chunk({
-            content: wrap(content, '```'),
+            content: wrap(content, '```\n', '\n```'),
             margin: {
               top: 2,
               bottom: 2,
