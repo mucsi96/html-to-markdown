@@ -164,6 +164,7 @@ Script to convert semantic HTML to markdown
             return [
               chunk({
                 content: chunks
+                  .filter((chunk) => chunk.content?.trim())
                   .map((chunk, index) => `${index + 1}. ${getListItem(chunk)}`)
                   .join('\n'),
                 margin: {
@@ -176,6 +177,7 @@ Script to convert semantic HTML to markdown
             return [
               chunk({
                 content: chunks
+                  .filter((chunk) => chunk.content?.trim())
                   .map((chunk) => `- ${getListItem(chunk)}`)
                   .join('\n'),
                 margin: {
@@ -200,7 +202,10 @@ Script to convert semantic HTML to markdown
             return [
               chunk({
                 content: wrap(
-                  chunks.map((chunk) => chunk.content ?? '').join(' | '),
+                  chunks
+                    .filter((chunk) => chunk.content?.trim())
+                    .map((chunk) => chunk.content ?? '')
+                    .join(' | '),
                   '| ',
                   ' |'
                 ),
@@ -251,7 +256,7 @@ Script to convert semantic HTML to markdown
       return [];
     });
   }
-  
+
   function getMarkdown() {
     return joinChunks(getMarkdownRecursive(document.body)).content ?? '';
   }

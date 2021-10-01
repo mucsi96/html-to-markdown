@@ -153,6 +153,7 @@ function getMarkdownRecursive(root) {
                     return [
                         chunk({
                             content: chunks
+                                .filter((chunk) => chunk.content?.trim())
                                 .map((chunk, index) => `${index + 1}. ${getListItem(chunk)}`)
                                 .join('\n'),
                             margin: {
@@ -165,6 +166,7 @@ function getMarkdownRecursive(root) {
                     return [
                         chunk({
                             content: chunks
+                                .filter((chunk) => chunk.content?.trim())
                                 .map((chunk) => `- ${getListItem(chunk)}`)
                                 .join('\n'),
                             margin: {
@@ -186,7 +188,10 @@ function getMarkdownRecursive(root) {
                 case 'tr':
                     return [
                         chunk({
-                            content: wrap(chunks.map((chunk) => chunk.content ?? '').join(' | '), '| ', ' |'),
+                            content: wrap(chunks
+                                .filter((chunk) => chunk.content?.trim())
+                                .map((chunk) => chunk.content ?? '')
+                                .join(' | '), '| ', ' |'),
                             margin: {
                                 top: 1,
                                 bottom: 1,
