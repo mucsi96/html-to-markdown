@@ -46,11 +46,14 @@ Script to convert semantic HTML to markdown
   function wrap(content, prefix, suffix = prefix) {
     return content ? [prefix, content, suffix].join('') : '';
   }
-  function headingChunk(content, level = 1) {
+  function headingChunk(element, content, level = 1) {
+    const id = element.getAttribute('id');
     return content
       ? [
           chunk({
-            content: ['#'.repeat(level), content].join(' '),
+            content: ['#'.repeat(level), content, id && `{#${id}}`]
+              .filter(Boolean)
+              .join(' '),
             margin: {
               top: 2,
               bottom: 2,
@@ -58,6 +61,12 @@ Script to convert semantic HTML to markdown
           }),
         ]
       : [];
+  }
+  function getListItem(chunk) {
+    return (
+      chunk.content?.replace(/\n\n/g, '\n').replace(/^(-|\d+.) /gm, '  $&') ??
+      ''
+    );
   }
   function getMarkdownRecursive(root) {
     return Array.from(root.childNodes).flatMap((child) => {
@@ -87,17 +96,13 @@ Script to convert semantic HTML to markdown
           case 'em':
             return [
               chunk({
-                content: wrap(content, '*'),
-                margin: {
-                  right: 1,
-                  left: 1,
-                },
+                content: wrap(content?.trim(), '*'),
               }),
             ];
           case 'strong':
             return [
               chunk({
-                content: wrap(content, '**'),
+                content: wrap(content?.trim(), '**'),
                 margin: {
                   right: 1,
                   left: 1,
@@ -105,17 +110,17 @@ Script to convert semantic HTML to markdown
               }),
             ];
           case 'h1':
-            return headingChunk(content, 1);
+            return headingChunk(element, content, 1);
           case 'h2':
-            return headingChunk(content, 2);
+            return headingChunk(element, content, 2);
           case 'h3':
-            return headingChunk(content, 3);
+            return headingChunk(element, content, 3);
           case 'h4':
-            return headingChunk(content, 4);
+            return headingChunk(element, content, 4);
           case 'h5':
-            return headingChunk(content, 5);
+            return headingChunk(element, content, 5);
           case 'h6':
-            return headingChunk(content, 6);
+            return headingChunk(element, content, 6);
           case 'code':
             return chunk({
               content: wrap(content, '`'),
@@ -156,7 +161,7 @@ Script to convert semantic HTML to markdown
             return [
               chunk({
                 content: chunks
-                  .map((chunk, index) => `${index + 1}. ${chunk.content ?? ''}`)
+                  .map((chunk, index) => `${index + 1}. ${getListItem(chunk)}`)
                   .join('\n'),
                 margin: {
                   top: 2,
@@ -168,10 +173,67 @@ Script to convert semantic HTML to markdown
             return [
               chunk({
                 content: chunks
-                  .map((chunk) => `- ${chunk.content ?? ''}`)
+                  .map((chunk) => `- ${getListItem(chunk)}`)
                   .join('\n'),
                 margin: {
                   top: 2,
+                  bottom: 2,
+                },
+              }),
+            ];
+          case 'img':
+            return [
+              chunk({
+                content: `![${
+                  element.getAttribute('alt') ?? ''
+                }](${element.getAttribute('src')})`,
+                margin: {
+                  top: 2,
+                  bottom: 2,
+                },
+              }),
+            ];
+          case 'tr':
+            return [
+              chunk({
+                content: wrap(
+                  chunks.map((chunk) => chunk.content ?? '').join(' | '),
+                  '| ',
+                  ' |'
+                ),
+                margin: {
+                  top: 1,
+                  bottom: 1,
+                },
+              }),
+            ];
+          case 'thead':
+            return [
+              chunk({
+                content,
+                margin: {
+                  top: 2,
+                },
+              }),
+              chunk({
+                content: wrap(
+                  Array((content ?? '').split('|').length - 2)
+                    .fill('-')
+                    .join(' | '),
+                  '| ',
+                  ' |'
+                ),
+                margin: {
+                  top: 1,
+                  bottom: 1,
+                },
+              }),
+            ];
+          case 'tbody':
+            return [
+              chunk({
+                content,
+                margin: {
                   bottom: 2,
                 },
               }),
@@ -186,7 +248,7 @@ Script to convert semantic HTML to markdown
       return [];
     });
   }
-  
+
   function getMarkdown() {
     return joinChunks(getMarkdownRecursive(document.body)).content ?? '';
   }
