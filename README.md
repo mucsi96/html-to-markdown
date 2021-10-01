@@ -84,6 +84,16 @@ Script to convert semantic HTML to markdown
                 },
               }),
             ];
+          case 'em':
+            return [
+              chunk({
+                content: wrap(content, '*'),
+                margin: {
+                  right: 1,
+                  left: 1,
+                },
+              }),
+            ];
           case 'strong':
             return [
               chunk({
@@ -176,6 +186,7 @@ Script to convert semantic HTML to markdown
       return [];
     });
   }
+  
   function getMarkdown() {
     return joinChunks(getMarkdownRecursive(document.body)).content ?? '';
   }

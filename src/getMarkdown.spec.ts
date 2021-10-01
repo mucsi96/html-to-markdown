@@ -31,7 +31,12 @@ describe('getMarkdown', () => {
     expect(getMarkdown()).toEqual('sample\ntext');
   });
 
-  test('returns strong text as bold', () => {
+  test('returns emphasis text in italics', () => {
+    document.body.innerHTML = 'sample<em>emphasis</em>text';
+    expect(getMarkdown()).toEqual('sample *emphasis* text');
+  });
+
+  test('returns strong text in bold', () => {
     document.body.innerHTML = 'sample<strong>strong</strong>text';
     expect(getMarkdown()).toEqual('sample **strong** text');
   });

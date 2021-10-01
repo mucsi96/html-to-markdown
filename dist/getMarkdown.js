@@ -76,6 +76,16 @@ function getMarkdownRecursive(root) {
                             },
                         }),
                     ];
+                case 'em':
+                    return [
+                        chunk({
+                            content: wrap(content, '*'),
+                            margin: {
+                                right: 1,
+                                left: 1,
+                            },
+                        }),
+                    ];
                 case 'strong':
                     return [
                         chunk({
